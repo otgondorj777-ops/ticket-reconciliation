@@ -1,0 +1,608 @@
+<!DOCTYPE html>
+<html lang="mn">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Тийз Нийцлийн Шалгалт — Аэро Монголиа</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Playfair+Display:wght@700&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<style>
+:root{
+  --navy:#0F1B3D; --blue:#1A3A8C; --gold:#C9930A;
+  --cream:#F5F0E8; --paper:#EEE8DA; --card:#FFFFFF;
+  --border:#DDD5C2; --muted:#7A6E60; --ink:#0F1B3D;
+  --green:#2E7D32; --red:#C62828; --yellow:#F57F17;
+  --green-bg:#E8F5E9; --red-bg:#FFEBEE; --yellow-bg:#FFFDE7; --blue-bg:#E3F2FD;
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:"DM Sans",sans-serif;background:var(--cream);color:var(--ink);min-height:100vh;}
+
+/* NAV */
+.nav{background:var(--navy);color:#fff;padding:0 24px;display:flex;align-items:center;
+  justify-content:space-between;height:54px;position:sticky;top:0;z-index:100;
+  border-bottom:2px solid var(--gold);}
+.nav-brand{font-family:"Playfair Display",serif;font-size:17px;font-weight:700;
+  display:flex;align-items:center;gap:10px;}
+.nav-brand span{color:var(--gold);}
+.nav-tag{font-size:11px;background:rgba(201,147,10,.2);color:var(--gold);
+  border:1px solid rgba(201,147,10,.4);padding:2px 8px;border-radius:20px;}
+
+/* MAIN */
+.main{max-width:960px;margin:0 auto;padding:32px 20px 60px;}
+h2{font-family:"Playfair Display",serif;font-size:22px;margin-bottom:6px;color:var(--navy);}
+.subtitle{color:var(--muted);font-size:14px;margin-bottom:24px;}
+
+/* CARD */
+.card{background:var(--card);border:1px solid var(--border);border-radius:12px;
+  padding:24px;margin-bottom:20px;box-shadow:0 1px 4px rgba(0,0,0,.06);}
+.card-title{font-size:13px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;
+  color:var(--muted);margin-bottom:16px;}
+
+/* UPLOAD ZONES */
+.uploads{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:20px;}
+.drop-zone{border:2px dashed var(--border);border-radius:12px;padding:28px 20px;
+  text-align:center;cursor:pointer;transition:.2s;background:var(--paper);}
+.drop-zone:hover,.drop-zone.drag{border-color:var(--blue);background:var(--blue-bg);}
+.drop-zone.done{border-color:var(--green);border-style:solid;background:var(--green-bg);}
+.drop-zone.done .dz-icon{color:var(--green);}
+.dz-icon{font-size:32px;margin-bottom:10px;color:var(--muted);}
+.dz-label{font-size:13px;font-weight:600;color:var(--ink);margin-bottom:4px;}
+.dz-sub{font-size:12px;color:var(--muted);}
+.dz-fname{font-size:12px;color:var(--green);font-weight:600;margin-top:6px;word-break:break-all;}
+input[type=file]{display:none;}
+
+/* TOLERANCE */
+.tol-row{display:flex;align-items:center;gap:16px;margin-bottom:20px;}
+.tol-row label{font-size:13px;font-weight:600;color:var(--muted);white-space:nowrap;}
+.tol-row input[type=range]{flex:1;accent-color:var(--blue);}
+.tol-val{font-size:14px;font-weight:700;color:var(--blue);min-width:80px;text-align:right;}
+
+/* RUN BUTTON */
+.btn-run{display:block;width:100%;padding:14px;background:var(--navy);color:#fff;
+  border:none;border-radius:10px;font-size:15px;font-weight:700;cursor:pointer;
+  font-family:"DM Sans",sans-serif;letter-spacing:.02em;transition:.2s;}
+.btn-run:hover:not(:disabled){background:var(--blue);}
+.btn-run:disabled{opacity:.4;cursor:not-allowed;}
+
+/* METRICS */
+.metrics{display:grid;grid-template-columns:repeat(6,1fr);gap:12px;margin-bottom:20px;}
+.metric{background:var(--card);border:1px solid var(--border);border-radius:10px;
+  padding:14px 10px;text-align:center;border-top:3px solid var(--border);}
+.metric.ok{border-top-color:var(--green);}
+.metric.err{border-top-color:var(--red);}
+.metric.warn{border-top-color:var(--yellow);}
+.metric.info{border-top-color:var(--blue);}
+.metric.gray{border-top-color:var(--muted);}
+.metric .m-val{font-size:26px;font-weight:700;line-height:1;}
+.metric.ok .m-val{color:var(--green);}
+.metric.err .m-val{color:var(--red);}
+.metric.warn .m-val{color:var(--yellow);}
+.metric.info .m-val{color:var(--blue);}
+.metric.gray .m-val{color:var(--muted);}
+.metric .m-lbl{font-size:11px;color:var(--muted);margin-top:4px;}
+
+/* SECTION HEADER */
+.sec-hdr{display:flex;align-items:center;justify-content:space-between;
+  padding:12px 16px;border-radius:8px;cursor:pointer;margin-bottom:2px;
+  font-size:13px;font-weight:700;}
+.sec-hdr.red{background:var(--red-bg);color:var(--red);}
+.sec-hdr.green{background:var(--green-bg);color:var(--green);}
+.sec-hdr.blue{background:var(--blue-bg);color:var(--blue);}
+.sec-hdr.yellow{background:var(--yellow-bg);color:var(--yellow);}
+.sec-hdr .chevron{transition:.2s;}
+.sec-hdr.open .chevron{transform:rotate(180deg);}
+.sec-body{display:none;margin-bottom:16px;}
+.sec-body.open{display:block;}
+
+/* TABLE */
+.tbl-wrap{overflow-x:auto;border-radius:0 0 10px 10px;border:1px solid var(--border);border-top:none;}
+table{width:100%;border-collapse:collapse;font-size:13px;}
+th{background:var(--paper);padding:9px 12px;text-align:left;font-weight:700;
+  font-size:11px;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);
+  border-bottom:1px solid var(--border);}
+td{padding:9px 12px;border-bottom:1px solid var(--border);vertical-align:top;}
+tr:last-child td{border-bottom:none;}
+tr.row-ok td{background:rgba(46,125,50,.06);}
+tr.row-err td{background:rgba(198,40,40,.07);}
+tr.row-warn td{background:rgba(245,127,23,.07);}
+tr.row-info td{background:rgba(26,58,140,.06);}
+.badge{display:inline-block;padding:2px 8px;border-radius:20px;font-size:11px;font-weight:700;}
+.badge-ok{background:var(--green-bg);color:var(--green);}
+.badge-err{background:var(--red-bg);color:var(--red);}
+.badge-warn{background:var(--yellow-bg);color:#E65100;}
+.badge-info{background:var(--blue-bg);color:var(--blue);}
+.code{font-family:monospace;font-size:13px;font-weight:700;letter-spacing:.05em;}
+.amt{font-variant-numeric:tabular-nums;text-align:right;}
+.diff-pos{color:var(--red);font-weight:700;}
+.diff-ok{color:var(--green);}
+
+/* DOWNLOAD */
+.btn-dl{display:block;width:100%;padding:13px;background:var(--green);color:#fff;
+  border:none;border-radius:10px;font-size:14px;font-weight:700;cursor:pointer;
+  font-family:"DM Sans",sans-serif;transition:.2s;text-align:center;}
+.btn-dl:hover{background:#1B5E20;}
+
+/* SPINNER */
+.spinner{display:none;text-align:center;padding:20px;color:var(--muted);}
+@keyframes spin{to{transform:rotate(360deg)}}
+.spin-icon{display:inline-block;animation:spin 1s linear infinite;font-size:24px;}
+
+/* HIDDEN */
+.hidden{display:none!important;}
+</style>
+</head>
+<body>
+
+<nav class="nav">
+  <div class="nav-brand">✈️ &nbsp;Аэро Монголиа &nbsp;<span>•</span>&nbsp; Нийцлийн Шалгалт</div>
+  <div class="nav-tag">Санхүүгийн хяналт</div>
+</nav>
+
+<div class="main">
+
+  <h2>Тийз борлуулалт — Дансны нийцлийн шалгалт</h2>
+  <p class="subtitle">Payment Data Extract болон Голомт банкны хуулгыг харьцуулж зөрчлийг илрүүлнэ</p>
+
+  <!-- UPLOAD -->
+  <div class="uploads">
+    <div class="drop-zone" id="dz1" onclick="document.getElementById('f1').click()">
+      <input type="file" id="f1" accept=".xlsx,.xls">
+      <div class="dz-icon">📋</div>
+      <div class="dz-label">Тийзний жагсаалт</div>
+      <div class="dz-sub">Payment_Data_Extract*.xlsx</div>
+      <div class="dz-fname" id="f1name"></div>
+    </div>
+    <div class="drop-zone" id="dz2" onclick="document.getElementById('f2').click()">
+      <input type="file" id="f2" accept=".xlsx,.xls,.XLS">
+      <div class="dz-icon">🏦</div>
+      <div class="dz-label">Дансны хуулга</div>
+      <div class="dz-sub">ST_*.XLS (Голомт банк)</div>
+      <div class="dz-fname" id="f2name"></div>
+    </div>
+  </div>
+
+  <!-- TOLERANCE -->
+  <div class="card">
+    <div class="card-title">Тохиргоо</div>
+    <div class="tol-row">
+      <label>Тэвчих зөрүү</label>
+      <input type="range" id="tol" min="0" max="5000" step="100" value="500"
+             oninput="document.getElementById('tolval').textContent=Number(this.value).toLocaleString()+'₮'">
+      <span class="tol-val" id="tolval">500₮</span>
+    </div>
+    <button class="btn-run" id="runBtn" disabled onclick="run()">🔍 &nbsp; Шалгалт хийх</button>
+  </div>
+
+  <!-- SPINNER -->
+  <div class="spinner" id="spinner"><span class="spin-icon">⚙️</span> &nbsp; Боловсруулж байна...</div>
+
+  <!-- RESULTS -->
+  <div id="results" class="hidden">
+
+    <!-- METRICS -->
+    <div class="metrics" id="metricsRow"></div>
+
+    <!-- VIOLATION TABLE -->
+    <div id="badSection" class="hidden">
+      <div class="sec-hdr red open" onclick="toggle('badBody',this)">
+        <span id="badTitle">🚨 Зөрчилтэй тийзнүүд</span>
+        <span class="chevron">▼</span>
+      </div>
+      <div class="sec-body open tbl-wrap" id="badBody">
+        <table id="badTable"></table>
+      </div>
+    </div>
+
+    <!-- MATCHED TABLE -->
+    <div id="okSection">
+      <div class="sec-hdr green" onclick="toggle('okBody',this)" style="margin-top:12px;">
+        <span id="okTitle">✅ Нийцсэн тийзнүүд</span>
+        <span class="chevron">▼</span>
+      </div>
+      <div class="sec-body tbl-wrap" id="okBody">
+        <table id="okTable"></table>
+      </div>
+    </div>
+
+    <!-- UNMATCHED BANK -->
+    <div id="ubSection" class="hidden">
+      <div class="sec-hdr blue" onclick="toggle('ubBody',this)" style="margin-top:12px;">
+        <span id="ubTitle">🔍 Тийзгүй банкны орлого</span>
+        <span class="chevron">▼</span>
+      </div>
+      <div class="sec-body tbl-wrap" id="ubBody">
+        <table id="ubTable"></table>
+      </div>
+    </div>
+
+    <!-- DOWNLOAD -->
+    <div style="margin-top:24px;">
+      <button class="btn-dl" onclick="downloadExcel()">⬇️ &nbsp; Excel тайлан татах</button>
+    </div>
+
+  </div><!-- /results -->
+
+</div><!-- /main -->
+
+<script>
+// ════════════════════════════════════════════════════════
+//  STATE
+// ════════════════════════════════════════════════════════
+let payData = null, bankData = null, lastResults = null, lastUnmatched = null;
+
+// ════════════════════════════════════════════════════════
+//  FILE HANDLING
+// ════════════════════════════════════════════════════════
+function setupDrop(dzId, inputId, nameId, onLoad) {
+  const dz = document.getElementById(dzId);
+  const inp = document.getElementById(inputId);
+
+  inp.onchange = e => readFile(e.target.files[0], dzId, nameId, onLoad);
+
+  dz.ondragover = e => { e.preventDefault(); dz.classList.add('drag'); };
+  dz.ondragleave = () => dz.classList.remove('drag');
+  dz.ondrop = e => {
+    e.preventDefault(); dz.classList.remove('drag');
+    const f = e.dataTransfer.files[0];
+    if (f) { inp.files = e.dataTransfer.files; readFile(f, dzId, nameId, onLoad); }
+  };
+}
+
+function readFile(file, dzId, nameId, onLoad) {
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = e => {
+    const wb = XLSX.read(e.target.result, {type:'array', cellDates:true});
+    const ws = wb.Sheets[wb.SheetNames[0]];
+    const data = XLSX.utils.sheet_to_json(ws, {header:1, defval:null, raw:false});
+    onLoad(data, file.name);
+    document.getElementById(nameId).textContent = '✓ ' + file.name;
+    document.getElementById(dzId).classList.add('done');
+    checkReady();
+  };
+  reader.readAsArrayBuffer(file);
+}
+
+function checkReady() {
+  document.getElementById('runBtn').disabled = !(payData && bankData);
+}
+
+// ════════════════════════════════════════════════════════
+//  PARSERS
+// ════════════════════════════════════════════════════════
+function cleanAmt(v) {
+  if (v === null || v === undefined || v === '') return 0;
+  const s = String(v).replace(/[,\s₮]/g,'');
+  const n = parseFloat(s);
+  return isNaN(n) ? 0 : n;
+}
+
+function parsePayments(data) {
+  const rows = [];
+  for (let i = 8; i < data.length; i++) {
+    const r = data[i];
+    if (!r) continue;
+    const code = r[3] ? String(r[3]).trim() : '';
+    if (!code || code === 'nan') continue;
+    rows.push({
+      code,
+      amount: cleanAmt(r[9]),
+      date:   r[4] ? String(r[4]).trim() : '',
+      method: r[5] ? String(r[5]).trim() : '',
+      payer:  r[8] ? String(r[8]).trim() : '',
+      dept:   r[1] ? String(r[1]).trim() : '',
+    });
+  }
+  return rows;
+}
+
+function parseBank(data) {
+  const rows = [];
+  for (const r of data) {
+    if (!r || !r[0]) continue;
+    const d = String(r[0]).trim();
+    if (!d.startsWith('2025') && !d.startsWith('2026')) continue;
+    const desc = r[28] ? String(r[28]).trim() : '';
+    if (!desc) continue;
+    const income = cleanAmt(r[7]);
+    rows.push({
+      date:        d,
+      income,
+      expense:     cleanAmt(r[11]),
+      desc,
+      counterpart: r[23] ? String(r[23]).trim() : '',
+      balance:     cleanAmt(r[26]),
+    });
+  }
+  return rows;
+}
+
+// ════════════════════════════════════════════════════════
+//  FUZZY MATCHING
+// ════════════════════════════════════════════════════════
+function normCode(s) {
+  return s.toUpperCase().replace(/O/g,'0').replace(/I/g,'1').replace(/V/g,'U').replace(/Z/g,'2');
+}
+
+function editDist(a, b) {
+  const m = a.length, n = b.length;
+  const dp = Array.from({length:m+1}, (_,i) => Array.from({length:n+1}, (_,j) => i===0?j:j===0?i:0));
+  for (let i=1;i<=m;i++) for (let j=1;j<=n;j++)
+    dp[i][j] = a[i-1]===b[j-1] ? dp[i-1][j-1] : 1+Math.min(dp[i-1][j],dp[i][j-1],dp[i-1][j-1]);
+  return dp[m][n];
+}
+
+function similarity(a, b) {
+  const mx = Math.max(a.length, b.length);
+  return mx === 0 ? 1 : 1 - editDist(a, b) / mx;
+}
+
+function codeInText(text, code) {
+  if (!text || !code) return {found:false, type:''};
+  const t = text.toUpperCase(), c = code.toUpperCase();
+  if (t.includes(c)) return {found:true, type:'EXACT'};
+  if (normCode(t).includes(normCode(c))) return {found:true, type:'FUZZY'};
+  if (c.length >= 5) {
+    const re = new RegExp(`[A-Z0-9]{${c.length}}`, 'g');
+    const toks = t.match(re) || [];
+    for (const tok of toks)
+      if (similarity(normCode(c), normCode(tok)) >= 0.72)
+        return {found:true, type:`PART(${tok})`};
+  }
+  return {found:false, type:''};
+}
+
+// ════════════════════════════════════════════════════════
+//  RECONCILIATION
+// ════════════════════════════════════════════════════════
+function reconcile(payments, bankRows, tolerance) {
+  const used = new Set();
+  const results = [];
+
+  // 1st pass: code matching
+  for (const p of payments) {
+    if (p.amount < 0) {
+      results.push({...p, bankRows:[], bankTotal:0, diff:p.amount, matchType:'REFUND', status:'↩️ Буцаалт'});
+      continue;
+    }
+    const codeMatches = [];
+    bankRows.forEach((b, i) => {
+      if (used.has(i) || b.income <= 0) return;
+      const {found, type} = codeInText(b.desc, p.code);
+      if (found) codeMatches.push({i, b, type});
+    });
+
+    if (codeMatches.length) {
+      const total = codeMatches.reduce((s,m) => s + m.b.income, 0);
+      const types = [...new Set(codeMatches.map(m=>m.type))].join('+');
+      codeMatches.forEach(m => used.add(m.i));
+      const diff = Math.round(p.amount - total);
+      const over = total > p.amount + tolerance;
+      const under = diff > tolerance;
+      const bankRowsInfo = codeMatches.map(m=>({date:m.b.date,amount:m.b.income,desc:m.b.desc,counterpart:m.b.counterpart,mtype:m.type}));
+      let status;
+      if (!under && !over) status = '✅ Нийцсэн';
+      else if (over)       status = `⚠️ Илүү орсон (+${fmtN(total-p.amount)}₮)`;
+      else                 status = `⚠️ Дутуу орсон (${fmtN(diff)}₮ дутуу)`;
+      results.push({...p, bankRows:bankRowsInfo, bankTotal:total, diff, matchType:types, status});
+    } else {
+      results.push({...p, bankRows:[], bankTotal:null, diff:p.amount, matchType:'NONE', status:'__PENDING__'});
+    }
+  }
+
+  // 2nd pass: amount matching
+  for (const r of results) {
+    if (r.status !== '__PENDING__') continue;
+    let best = null, bestD = Infinity;
+    bankRows.forEach((b, i) => {
+      if (used.has(i) || b.income <= 0) return;
+      const d = Math.abs(b.income - r.amount);
+      if (d <= tolerance && d < bestD) { bestD = d; best = {i, b}; }
+    });
+    if (best) {
+      used.add(best.i);
+      r.bankRows  = [{date:best.b.date,amount:best.b.income,desc:best.b.desc,counterpart:best.b.counterpart,mtype:'AMOUNT'}];
+      r.bankTotal = best.b.income;
+      r.diff      = Math.round(r.amount - best.b.income);
+      r.matchType = 'AMOUNT';
+      r.status    = '🔍 Дүнгээр тохируулсан';
+    } else {
+      r.status = '❌ Дансанд мөнгө ороогүй';
+    }
+  }
+
+  const unmatched = bankRows.filter((b,i) => !used.has(i) && b.income > 0);
+  return {results, unmatched};
+}
+
+// ════════════════════════════════════════════════════════
+//  UI HELPERS
+// ════════════════════════════════════════════════════════
+function fmtN(n) { return Number(n).toLocaleString('mn-MN'); }
+
+function badgeFor(status) {
+  if (status.startsWith('✅'))  return `<span class="badge badge-ok">✅ Нийцсэн</span>`;
+  if (status.startsWith('❌'))  return `<span class="badge badge-err">❌ Ороогүй</span>`;
+  if (status.includes('Дутуу')) return `<span class="badge badge-warn">⚠️ Дутуу</span>`;
+  if (status.includes('Илүү')) return `<span class="badge badge-warn">⚠️ Илүү</span>`;
+  if (status.includes('Дүнгээр')) return `<span class="badge badge-info">🔍 Дүн</span>`;
+  if (status.includes('Буцаалт')) return `<span class="badge" style="background:#eee;color:#666">↩️ Буцаалт</span>`;
+  return status;
+}
+
+function rowClass(status) {
+  if (status.startsWith('✅'))  return 'row-ok';
+  if (status.startsWith('❌'))  return 'row-err';
+  if (status.includes('⚠️'))   return 'row-warn';
+  if (status.includes('🔍'))   return 'row-info';
+  return '';
+}
+
+function toggle(bodyId, hdr) {
+  const b = document.getElementById(bodyId);
+  b.classList.toggle('open');
+  hdr.classList.toggle('open');
+}
+
+function buildTable(el, headers, rows) {
+  el.innerHTML = '<tr>' + headers.map(h=>`<th>${h}</th>`).join('') + '</tr>'
+    + rows.map(r => `<tr class="${r._cls||''}">${r._cells.join('')}</tr>`).join('');
+}
+
+function td(val,cls=''){return `<td class="${cls}">${val??'—'}</td>`;}
+function tdAmt(n){return `<td class="amt">${n!=null&&n!==''?fmtN(n)+'₮':'—'}</td>`;}
+function tdDiff(n){
+  if(n==null)return td('—');
+  const c = Math.abs(n)<500?'diff-ok':'diff-pos';
+  return `<td class="amt ${c}">${n>0?'+':n<0?'':''} ${fmtN(n)}₮</td>`;
+}
+
+// ════════════════════════════════════════════════════════
+//  RUN
+// ════════════════════════════════════════════════════════
+function run() {
+  if (!payData || !bankData) return;
+  document.getElementById('spinner').style.display = 'block';
+  document.getElementById('results').classList.add('hidden');
+
+  setTimeout(() => {
+    const tol = parseInt(document.getElementById('tol').value);
+    const payments = parsePayments(payData);
+    const bank     = parseBank(bankData);
+    const {results, unmatched} = reconcile(payments, bank, tol);
+    lastResults = results; lastUnmatched = unmatched;
+
+    renderResults(results, unmatched, tol);
+    document.getElementById('spinner').style.display = 'none';
+    document.getElementById('results').classList.remove('hidden');
+  }, 50);
+}
+
+function renderResults(results, unmatched, tol) {
+  const positives = results.filter(r => r.amount > 0);
+  const matched   = results.filter(r => r.status.startsWith('✅'));
+  const amountM   = results.filter(r => r.matchType === 'AMOUNT');
+  const under     = results.filter(r => r.status.includes('Дутуу'));
+  const noMatch   = results.filter(r => r.status === '❌ Дансанд мөнгө ороогүй');
+  const pct       = positives.length ? (matched.length/positives.length*100).toFixed(1) : 0;
+  const bad       = results.filter(r => r.status.includes('❌')||r.status.includes('⚠️')||r.status.includes('🔍 Дүнгээр'));
+
+  // Metrics
+  const styles = ['gray','ok','info','warn','err','ok'];
+  const mdata = [
+    ['Нийт тийз', positives.length],
+    ['✅ Нийцсэн', matched.length],
+    ['🔍 Дүнгээр', amountM.length],
+    ['⚠️ Дутуу', under.length],
+    ['❌ Ороогүй', noMatch.length],
+    [`${pct}%`, 'Нийцлийн %'],
+  ];
+  document.getElementById('metricsRow').innerHTML = mdata.map((m,i)=>`
+    <div class="metric ${styles[i]}">
+      <div class="m-val">${i<5?m[0]:pct+'%'}</div>
+      <div class="m-lbl">${i<5?m[1]:m[1]}</div>
+    </div>`).join('');
+
+  // Bad table
+  if (bad.length) {
+    document.getElementById('badSection').classList.remove('hidden');
+    document.getElementById('badTitle').textContent = `🚨 Зөрчилтэй тийзнүүд — ${bad.length} тийз`;
+    buildTable(document.getElementById('badTable'),
+      ['Тийзний код','Борлуулалт (₮)','Банкны дүн (₮)','Зөрүү (₮)','Огноо','Захиалагч','Тохирол','Банкны тайлбар'],
+      bad.map(r=>({_cls:rowClass(r.status), _cells:[
+        td(`<span class="code">${r.code}</span>`),
+        tdAmt(r.amount),
+        tdAmt(r.bankTotal),
+        tdDiff(r.bankTotal!=null ? r.diff : r.amount),
+        td(r.date), td(r.payer),
+        td(r.matchType),
+        td(r.bankRows.length ? r.bankRows[0].desc.substring(0,70) : '—'),
+      ]}))
+    );
+  }
+
+  // OK table
+  document.getElementById('okTitle').textContent = `✅ Нийцсэн тийзнүүд — ${matched.length} тийз`;
+  buildTable(document.getElementById('okTable'),
+    ['Тийзний код','Борлуулалт (₮)','Банкны дүн (₮)','Зөрүү','Огноо','Захиалагч','Тохирол'],
+    matched.map(r=>({_cls:'row-ok', _cells:[
+      td(`<span class="code">${r.code}</span>`),
+      tdAmt(r.amount), tdAmt(r.bankTotal), tdDiff(r.diff),
+      td(r.date), td(r.payer), td(r.matchType),
+    ]}))
+  );
+
+  // Unmatched bank
+  if (unmatched.length) {
+    document.getElementById('ubSection').classList.remove('hidden');
+    document.getElementById('ubTitle').textContent = `🔍 Тийзгүй банкны орлого — ${unmatched.length} мөр`;
+    buildTable(document.getElementById('ubTable'),
+      ['Огноо','Орлого (₮)','Гүйлгээний утга','Харьцсан тал'],
+      unmatched.map(b=>({_cls:'row-info', _cells:[
+        td(b.date), tdAmt(b.income),
+        td(b.desc.substring(0,80)), td(b.counterpart),
+      ]}))
+    );
+  }
+}
+
+// ════════════════════════════════════════════════════════
+//  EXCEL DOWNLOAD
+// ════════════════════════════════════════════════════════
+function downloadExcel() {
+  if (!lastResults) return;
+  const wb = XLSX.utils.book_new();
+  const tol = parseInt(document.getElementById('tol').value);
+  const now = new Date().toLocaleString('mn-MN');
+
+  // Sheet 1: Зөрчил
+  const bad = lastResults.filter(r=>r.status.includes('❌')||r.status.includes('⚠️')||r.status.includes('🔍 Дүнгээр'));
+  const badData = [
+    ['Тийзний код','Борлуулалт (₮)','Банкны дүн (₮)','Зөрүү (₮)','Огноо','Захиалагч','Тохирол','Банкны тайлбар','Төлөв'],
+    ...bad.map(r=>[r.code, r.amount, r.bankTotal||'', r.bankTotal!=null?r.diff:r.amount,
+                   r.date, r.payer, r.matchType,
+                   r.bankRows.length?r.bankRows[0].desc:'', r.status])
+  ];
+  XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(badData), '❌ Зөрчил');
+
+  // Sheet 2: Нийцсэн
+  const ok = lastResults.filter(r=>r.status.startsWith('✅'));
+  const okData = [
+    ['Тийзний код','Борлуулалт (₮)','Банкны дүн (₮)','Зөрүү (₮)','Огноо','Захиалагч','Тохирол','Банкны тайлбар'],
+    ...ok.map(r=>[r.code, r.amount, r.bankTotal, r.diff,
+                  r.date, r.payer, r.matchType,
+                  r.bankRows.length?r.bankRows[0].desc:''])
+  ];
+  XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(okData), '✅ Нийцсэн');
+
+  // Sheet 3: Дэлгэрэнгүй
+  const allData = [
+    ['Тийзний код','Борлуулалт (₮)','Банкны дүн (₮)','Зөрүү (₮)','Огноо','Захиалагч','Арга','Тохирол','Банкны тайлбар','Төлөв'],
+    ...lastResults.map(r=>[r.code, r.amount, r.bankTotal||'',
+                           r.bankTotal!=null?r.diff:r.amount,
+                           r.date, r.payer, r.method, r.matchType,
+                           r.bankRows.length?r.bankRows[0].desc:'', r.status])
+  ];
+  XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(allData), '📋 Дэлгэрэнгүй');
+
+  // Sheet 4: Тайлан дэлгэрэнгүй банк
+  if (lastUnmatched.length) {
+    const ubData = [
+      ['Огноо','Орлого (₮)','Гүйлгээний утга','Харьцсан тал'],
+      ...lastUnmatched.map(b=>[b.date, b.income, b.desc, b.counterpart])
+    ];
+    XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(ubData), '🔍 Банкны нэмэлт');
+  }
+
+  const date = new Date().toISOString().slice(0,10).replace(/-/g,'');
+  XLSX.writeFile(wb, `нийцлийн_тайлан_${date}.xlsx`);
+}
+
+// ════════════════════════════════════════════════════════
+//  INIT
+// ════════════════════════════════════════════════════════
+setupDrop('dz1','f1','f1name', (d,n) => { payData  = d; });
+setupDrop('dz2','f2','f2name', (d,n) => { bankData = d; });
+</script>
+</body>
+</html>
